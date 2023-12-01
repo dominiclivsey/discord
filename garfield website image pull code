@@ -1,0 +1,66 @@
+import * as jsdom from "jsdom"
+import fetch from "node-fetch"
+
+
+async function get() {
+    const date = new Date()
+    const year = new Intl.DateTimeFormat("en", { year: "numeric" }).format(date)
+    const month = new Intl.DateTimeFormat("en", { month: "2-digit" }).format(date)
+    const day = new Intl.DateTimeFormat("en", { day: "2-digit" }).format(date)
+
+    const url = `https://www.gocomics.com/garfield/${year}/${month}/${day}`
+    const html = await (await fetch(url)).text()
+    const dom = new jsdom.JSDOM(html)
+
+    return dom.window.document.getElementsByClassName("item-comic-image")[0].getElementsByTagName("img")[0].attributes.src.value
+
+}
+
+console.log(await get())
+
+import { Client, GatewayIntentBits } from 'discord.js';
+
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+});
+
+const token = '#';
+
+client.on('ready', async () => {
+    console.log(`Logged in as ${client.user.tag}`);
+    const channelId = '540075152306601986';
+    const channel = client.channels.cache.get(channelId);
+    if (channel) {
+      channel.send('garfield comic for today.')
+      channel.send(await get());
+    } else {
+      console.error('Channel not found.');
+    }
+  
+    client.destroy()
+});
+
+
+client.on("ready", async () => {
+  console.log(`Logged in as ${client.user.tag}`);
+
+  const pingCommand = {
+      name: "ping",
+      description: "Test the bot's responsiveness with a simple ping command"
+  };
+  
+  const guild = client.guilds.cache.get("1100732776426246166");
+  await guild.commands.create(pingCommand);
+});
+
+
+client.on("interactionCreate", async (interaction) => {
+    if (!interaction.isCommand()) return;
+
+    if (interaction.commandName === "ping") {
+        await interaction.reply("Pong!");
+    }
+});
+
+client.login(token);
+
